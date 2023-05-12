@@ -4,10 +4,15 @@ rm(list = ls())
 ###################################################
 # Obtaining and cleaning the data
 
-# Manually download .txt zip from
-https://ec.europa.eu/info/business-economy-euro/indicators-statistics/economic-databases/macro-economic-database-ameco/download-annual-data-set-macro-economic-database-ameco_en
+# Manually download .txt zip from https://ec.europa.eu/info/business-economy-euro/indicators-statistics/economic-databases/macro-economic-database-ameco/download-annual-data-set-macro-economic-database-ameco_en
 
-files <- dir("/path-to-folder/ameco0", "*.TXT", full.names = TRUE)
+files <- dir("C:/Users/Documents/deflator_switzerland/ameco0", "*.TXT", full.names = TRUE)
+
+## Open libraries 
+# load packages
+library(dplyr)
+library(tidyr)
+library(tibble)
 
 # Read files, bind together, clean, save
 all_files <- lapply(files, function(file) {
@@ -15,13 +20,12 @@ all_files <- lapply(files, function(file) {
              stringsAsFactors = FALSE, strip.white = TRUE)
 })
 
-unlink(temp_dir, recursive = TRUE)
+#unlink(temp_dir, recursive = TRUE)
 
 ameco <- do.call(rbind, all_files)
-ameco <- tbl_df(ameco)
+ameco <- tibble::as_tibble(ameco)
 ameco <- ameco[, -ncol(ameco)] # Drop stray/empty last column
 names(ameco) <- tolower(names(ameco))
-
 # Extract short country names
 ameco$cntry <- regmatches(ameco$code,regexpr("^[[:alnum:]]+", ameco$code))
 
@@ -31,7 +35,7 @@ ameco$year <- gsub("x", "", ameco$year)
 ameco$year <- as.numeric(ameco$year)
 ameco$value <- suppressWarnings(as.numeric(ameco$value))
 
-save(ameco, file = "/path-to-folder/ameco.RData", compress = "xz")
+save(ameco, file = "C:/Users/Documents/deflator_switzerland/ameco.RData", compress = "xz")
 
 ###################################################
 
@@ -40,27 +44,28 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(reshape2)
+library(tibble)
 
 # Load the data
-load("/path-to-folder/ameco.RData")
+load("C:/Users/Documents/deflator_switzerland/ameco.RData")
 
-es <- subset(ameco, cntry == "ESP")
+ch <- subset(ameco, cntry == "CHE")
 
-OVGD <- subset(es, code=="ESP.1.1.0.0.OVGD") # Gross domestic product / Gross domestic product at 2010 reference levels / Mrd EURO-ESP
-UVGD <- subset(es, code=="ESP.1.0.0.0.UVGD") # Gross domestic product / Gross domestic product at current prices / Mrd EURO-ESP
-UWCD <- subset(es, code=="ESP.1.0.0.0.UWCD") # Compensation of employees / Total Economy / Mrd EURO-ESP
-UOGD <- subset(es, code=="ESP.1.0.0.0.UOGD") # Gross Operating Surplus / Total Economy / Mrd EURO-ESP
-UTVT <- subset(es, code=="ESP.1.0.0.0.UTVT") # Taxes linked to imports and production and subsidies / Taxes linked to imports and production: total economy / Mrd EURO-ESP
-NLHT <- subset(es, code=="ESP.1.0.0.0.NLHT") # Gross domestic product per hour worked / Total annual hours worked / Millions
-NWTN <- subset(es, code=="ESP.1.0.0.0.NWTN") # Wage and salary earners, persons (national accounts) / Employees (persons) Total economy: national accounts / 1000 persons
-UQGD <- subset(es, code=="ESP.1.0.0.0.UQGD") # Wage and salary earners, persons (national accounts) / Employees (persons) Total economy: national accounts / 1000 persons
+OVGD <- subset(ch, code=="CHE.1.1.0.0.OVGD") # Gross domestic product / Gross domestic product at 2010 reference levels / Mrd EURO-CHE
+UVGD <- subset(ch, code=="CHE.1.0.0.0.UVGD") # Gross domestic product / Gross domestic product at current prices / Mrd EURO-CHE
+UWCD <- subset(ch, code=="CHE.1.0.0.0.UWCD") # Compensation of employees / Total Economy / Mrd EURO-CHE
+UOGD <- subset(ch, code=="CHE.1.0.0.0.UOGD") # Gross Operating Surplus / Total Economy / Mrd EURO-CHE
+UTVT <- subset(ch, code=="CHE.1.0.0.0.UTVT") # Taxes linked to imports and production and subsidies / Taxes linked to imports and production: total economy / Mrd EURO-CHE
+NLHT <- subset(ch, code=="CHE.1.0.0.0.NLHT") # Gross domestic product per hour worked / Total annual hours worked / Millions
+NWTN <- subset(ch, code=="CHE.1.0.0.0.NWTN") # Wage and salary earners, persons (national accounts) / Employees (persons) Total economy: national accounts / 1000 persons
+UQGD <- subset(ch, code=="CHE.1.0.0.0.UQGD") # Wage and salary earners, persons (national accounts) / Employees (persons) Total economy: national accounts / 1000 persons
 
 
-# OVGD - Gross domestic product / Gross domestic product at 2010 reference levels / Mrd EURO-ESP
-# UVGD - Gross domestic product / Gross domestic product at current prices / Mrd EURO-ESP
-# UWCD - Compensation of employees / Total Economy / Mrd EURO-ESP
-# UOGD - Gross Operating Surplus / Total Economy / Mrd EURO-ESP
-# UTVT - Taxes linked to imports and production and subsidies / Taxes linked to imports and production: total economy / Mrd EURO-ESP
+# OVGD - Gross domestic product / Gross domestic product at 2010 reference levels / Mrd EURO-CHE
+# UVGD - Gross domestic product / Gross domestic product at current prices / Mrd EURO-CHE
+# UWCD - Compensation of employees / Total Economy / Mrd EURO-CHE
+# UOGD - Gross Operating Surplus / Total Economy / Mrd EURO-CHE
+# UTVT - Taxes linked to imports and production and subsidies / Taxes linked to imports and production: total economy / Mrd EURO-CHE
 # NLHT - Gross domestic product per hour worked / Total annual hours worked / Millions
 # NWTN - Wage and salary earners, persons (national accounts) / Employees (persons) Total economy: national accounts / 1000 persons
 
@@ -77,14 +82,14 @@ dfw <- spread(df,
               value = value)
 
 # rename
-dfw <- rename(dfw, OVGD = "ESP.1.1.0.0.OVGD")
-dfw <- rename(dfw, UVGD = "ESP.1.0.0.0.UVGD")
-dfw <- rename(dfw, UWCD = "ESP.1.0.0.0.UWCD")
-dfw <- rename(dfw, UOGD = "ESP.1.0.0.0.UOGD")
-dfw <- rename(dfw, UTVT = "ESP.1.0.0.0.UTVT")
-dfw <- rename(dfw, NLHT = "ESP.1.0.0.0.NLHT")
-dfw <- rename(dfw, NWTN = "ESP.1.0.0.0.NWTN")
-dfw <- rename(dfw, UQGD = "ESP.1.0.0.0.UQGD")
+dfw <- rename(dfw, OVGD = "CHE.1.1.0.0.OVGD")
+dfw <- rename(dfw, UVGD = "CHE.1.0.0.0.UVGD")
+dfw <- rename(dfw, UWCD = "CHE.1.0.0.0.UWCD")
+dfw <- rename(dfw, UOGD = "CHE.1.0.0.0.UOGD")
+dfw <- rename(dfw, UTVT = "CHE.1.0.0.0.UTVT")
+dfw <- rename(dfw, NLHT = "CHE.1.0.0.0.NLHT")
+dfw <- rename(dfw, NWTN = "CHE.1.0.0.0.NWTN")
+dfw <- rename(dfw, UQGD = "CHE.1.0.0.0.UQGD")
 
 dfw$sum_UTVT_UWCD_UOGD <- dfw$UTVT + dfw$UWCD + dfw$UOGD
 dfw$sum_UTVT_UWCD_UQGD <- dfw$UTVT + dfw$UWCD + dfw$UQGD
@@ -92,6 +97,9 @@ dfw$sum_UTVT_UWCD_UQGD <- dfw$UTVT + dfw$UWCD + dfw$UQGD
 # Calculate the GDP deflator
 dfw <- dfw %>% mutate(GDP_deflator = UVGD / OVGD)
 
+# Isolate GDP deflator (for project gofog)
+GDPdefl <- dfw$GDP_deflator[c(36:61)]
+GDPdefl
 # Compute components
 dfw <- dfw %>% mutate(
   unit_labor_costs = UWCD / OVGD,
@@ -117,28 +125,26 @@ dfw <- dfw %>% mutate(
   labor_prod_contrib = (labor_costs_contrib - perc_change_wages * lag(wages / GDP_deflator)) / (1 + perc_change_wages),
   wages_contrib = labor_costs_contrib - labor_prod_contrib,
   gross_operating_surplus_contrib = perc_change_unit_gross_operating_surplus * lag(unit_gross_operating_surplus / GDP_deflator),
-  net_indirect_taxes_contrib = perc_change_unit_net_indirect_taxes * lag(unit_net_indirect_taxes / GDP_deflator)
-)
-
+  net_indirect_taxes_contrib = perc_change_unit_net_indirect_taxes * lag(unit_net_indirect_taxes / GDP_deflator))
 # Prepare the data for plotting
 melted_df <- dfw %>% select(year, labor_prod_contrib, wages_contrib, gross_operating_surplus_contrib, net_indirect_taxes_contrib) %>% 
   gather(key = "variable", value = "value", -year)
 
 # Create the stacked bar plot with total GDP deflator as a line on top
 my_plot <- ggplot() +
-  geom_bar(data = subset(melted_df, year <= 2022), aes(x = year, y = value, fill = variable), stat = "identity") +
-  geom_line(data = subset(dfw, year <= 2022), aes(x = year, y = perc_change_GDP_deflator, color = "GDP deflator"), size = 1) +
-  scale_fill_manual(values = c("gross_operating_surplus_contrib" = "#2ca02c", "labor_prod_contrib" = "#1f77b4", "net_indirect_taxes_contrib" = "#d62728", "wages_contrib" = "#9467bd"),
+  geom_bar(data = subset(melted_df, year >= 1995 & year <= 2022), aes(x = year, y = value, fill = variable), stat = "identity") +
+  geom_line(data = subset(dfw, year >= 1995 & year <= 2022), aes(x = year, y = perc_change_GDP_deflator, color = "GDP deflator"), size = 1) +
+  geom_vline(xintercept=2003, linetype = "dotted") +
+  scale_fill_manual(values = c("gross_operating_surplus_contrib" = "yellow", "labor_prod_contrib" = "green", "net_indirect_taxes_contrib" = "blue", "wages_contrib" = "red"),
                     labels = c("Unit Profits", "Labor Productivity", "Unit Taxes",  "Wages")) +
   labs(x = "Year", y = "Annual percentage changes; p.p. contributions", fill = "Contributions", color = "") +
   theme_minimal() +
   theme(plot.background = element_rect(fill = "white")) + 
-  scale_x_continuous(breaks = seq(1960, 2022, by = 5)) +
-  scale_color_manual(name = "", values = "black", labels = "GDP deflator") + 
-  labs(title = "GDP deflator income side", 
-       subtitle = "Spain 1960-2022", 
-       caption = "Source: AMECO. By: @gmvidl.")
+  scale_x_continuous(breaks = seq(1960, 2020, by = 5)) +
+  scale_color_manual(name = "", values = "black", labels = "GDP Deflator") +
+  labs(title = "GDP Deflator income side", 
+       subtitle = "Switzerland 1995-2022", 
+       caption = "Source: AMECO. Original Script by @gmvidl. Adaptation from Desgraz (2023)")
 
 print(my_plot)
-
-
+ggsave(filename = "my_plot.png", plot = last_plot(), device = png, path = NULL) 
